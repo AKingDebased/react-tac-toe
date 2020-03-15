@@ -40,22 +40,22 @@
 }
 
 .board {
-	height: 600px;
-	width: 600px;
+	height: 525px;
+	width: 525px;
 	box-shadow: 2px 2px 6px grey;
 	// border-radius: 5px;
 	display: flex;
 	flex-wrap: wrap;
 	margin: 0 auto;
 	position: relative;
-	top: 8vh;
+	top: 13vh;
 	border-radius: 10px;
     overflow: hidden;
 }
 
 .square {
-	height: 200px;
-	flex-basis: 200px;
+	height: 175px;
+	flex-basis: 175px;
 	box-sizing: border-box;
 	border: 1px solid $secondary-purple;
 	background-color: $primary-purple;
