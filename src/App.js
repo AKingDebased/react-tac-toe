@@ -1,6 +1,7 @@
 import React from 'react';
-// TODO: Only import the firebase modules i need
-import firebase from './firebase-config';
+// TODO: Figure out the correct firebase modules for production
+import firestore from './firebase-config';
+import { v4 as uuidv4 } from 'uuid';
 import update from 'immutability-helper';
 
 class App extends React.Component {
@@ -13,7 +14,15 @@ class App extends React.Component {
 
 		this.squareIds = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
-		firebase.database();
+		// firestore.collection('games').add({
+		// 	gameId: uuidv4()
+		// })
+		// .then(function(docRef) {
+		// 	console.log("Document written with ID: ", docRef.id);
+		// })
+		// .catch(function(error) {
+		// 	console.error("Error adding document: ", error);
+		// });
 	}
 
 	checkGameState (selectedSquares) {
