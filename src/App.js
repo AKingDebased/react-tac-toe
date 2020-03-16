@@ -1,8 +1,12 @@
 import React from 'react';
 // TODO: Figure out the correct firebase modules for production
-import firestore from './firebase-config';
+import firebase from './firebase-config';
 import { v4 as uuidv4 } from 'uuid';
 import update from 'immutability-helper';
+
+const firestore = firebase.firestore();
+
+const testGameId = '6mBfZdGN2LdCEJthWp3x';
 
 class App extends React.Component {
 	constructor (props) {
@@ -14,14 +18,72 @@ class App extends React.Component {
 
 		this.squareIds = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
-		// firestore.collection('games').add({
-		// 	gameId: uuidv4()
-		// })
-		// .then(function(docRef) {
-		// 	console.log("Document written with ID: ", docRef.id);
-		// })
-		// .catch(function(error) {
-		// 	console.error("Error adding document: ", error);
+		const gamesRef = firestore.collection('games');
+
+		let currentGameRef,
+			currentPlayersRef;
+
+		// Authentication
+		firebase.auth().onAuthStateChanged(function(user) {
+			if (user) {
+				// User is signed in.
+				var displayName = user.displayName;
+				var email = user.email;
+				var emailVerified = user.emailVerified;
+				var photoURL = user.photoURL;
+				var isAnonymous = user.isAnonymous;
+				var uid = user.uid;
+				var providerData = user.providerData;
+				// ...
+
+				console.log('who the fuck are they?', user.uid);
+			} else {
+				// User is signed out.
+				// ...
+			}
+		});
+
+		gamesRef.get()
+		.then(gamesSnapshot => {
+			if (gamesSnapshot.size < 1) {
+				gamesRef.add({
+					inProgress: true
+				})
+				.then(ref => {
+					currentGameRef = ref;
+
+					currentPlayersRef = currentGameRef.collection('players');
+
+					currentPlayersRef.get()
+					.then(currentPlayersSnapshot => {
+						if (currentPlayersSnapshot.size < 2) {
+							
+						}
+					})
+				});
+			}
+		});
+
+		// currentGameRef.get()
+		// .then(docSnapshot => {
+		// 	if (docSnapshot.exists) {
+		// 		// Check if room is full. If not full, permit the user to enter
+		// 	} else {
+		// 		gamesRef.add({
+		// 			inProgress: true
+		// 		})
+		// 		.then(docRef => {
+		// 			currentGameUsersRef = docRef.collection('users');
+		
+		// 			currentGameUsersRef.add({})
+		// 			.then(docRef => {
+		// 				currentGameUsersRef.get()
+		// 				.then(snapshot => {
+		// 					console.log('size', snapshot.size);
+		// 				});
+		// 			});
+		// 		});
+		// 	}
 		// });
 	}
 
@@ -80,6 +142,9 @@ class App extends React.Component {
 	render () {
 		return (
 			<div className="App">
+				<input class="username" />
+				<input class="password" />
+				<button class="log-in">log in</button>
 				<GameState currentTurn={this.state.currentTurn}/>
 				<Board 
 					handleSquareClick={this.handleSquareClick.bind(this)} 

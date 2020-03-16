@@ -10,4 +10,4 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-export default firebase.firestore();
+export default firebase;
