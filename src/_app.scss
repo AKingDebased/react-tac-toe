@@ -54,12 +54,20 @@
 }
 
 .square {
+	display: flex;
+	justify-content: center;
+    align-items: center;
 	height: 175px;
 	flex-basis: 175px;
 	box-sizing: border-box;
 	border: 1px solid $secondary-purple;
 	background-color: $primary-purple;
 	transition: background-color 0.3s, box-shadow 0.3s;
+	cursor: pointer;
+	-webkit-user-select: none; /* Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+/Edge */
+	user-select: none; /* Standard */
 
 	&:hover {
 		background-color: $tertiary-purple;
@@ -69,5 +77,10 @@
 		background-color: darken($tertiary-purple, 8%);
 		box-shadow: 2px 2px 6px grey inset;
 	}
+}
+
+.symbol {
+	color: white;
+	font-size: 120px;
 }
 
