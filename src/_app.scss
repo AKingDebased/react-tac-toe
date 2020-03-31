@@ -84,3 +84,21 @@
 	font-size: 120px;
 }
 
+.user-auth,
+.user-auth__log-in,
+.user-auth__register {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.user-auth {
+	background-color: $tertiary-purple;
+	height: 40vh;
+	width: 80vh;
+	position: relative;
+	top: 30vh;
+	margin: 0 auto;
+	
+}

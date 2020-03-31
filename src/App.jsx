@@ -1,23 +1,26 @@
-import React from 'react';
-// import { v4 as uuidv4 } from 'uuid';
+// TODO: lint all this
+/* eslint-disable */
+import React, { Fragment, Component } from 'react';
 // import update from 'immutability-helper';
-// TODO: Figure out the correct firebase modules for production
-import firebase from './firebase-config';
 
 // Components
 import Board from './Board';
 import GameState from './GameState';
+import UserAuthForm from './UserAuthForm';
 
+// Database
+// TODO: Figure out the correct firebase modules for production
+import firebase from './firebase-config';
 const firestore = firebase.firestore();
 
-// const testGameId = '6mBfZdGN2LdCEJthWp3x';
-
-class App extends React.Component {
+class App extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			currentTurn: 'X',
 			selectedSquares: [],
+			isLoggedIn: false,
+			isLoading: true,
 		};
 
 		this.squareIds = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -28,23 +31,16 @@ class App extends React.Component {
 		let currentPlayersRef;
 
 		// Authentication
-		firebase.auth().onAuthStateChanged(user => {
+		firebase.auth().onAuthStateChanged((user) => {
 			if (user) {
-				// User is signed in.
-				var displayName = user.displayName;
-				var email = user.email;
-				var emailVerified = user.emailVerified;
-				var photoURL = user.photoURL;
-				var isAnonymous = user.isAnonymous;
-				var uid = user.uid;
-				var providerData = user.providerData;
-				// ...
-
-				console.log('who the fuck are they?', user.uid);
-			} else {
-				// User is signed out.
-				// ...
+				this.setState({
+					isLoggedIn: true,
+				});
 			}
+
+			this.setState({
+				isLoading: false,
+			});
 		});
 
 		gamesRef.get()
@@ -146,18 +142,34 @@ class App extends React.Component {
 	}
 
 	render() {
+		const { isLoggedIn, isLoading } = this.state;
+		let currentView;
+
+		if (isLoading) {
+			currentView = (
+				<Fragment>
+					<p>Loading!</p>
+				</Fragment>
+			);
+		} else if (isLoggedIn) {
+			currentView = (
+				<Fragment>
+					<GameState currentTurn={this.state.currentTurn}/>
+					<Board 
+						handleSquareClick={this.handleSquareClick.bind(this)} 
+						squareIds={this.squareIds} currentTurn={this.state.currentTurn} 
+						toggleCurrentTurn={this.toggleCurrentTurn.bind(this)}
+						selectedSquares={this.state.selectedSquares}
+					/>
+				</Fragment>
+			);
+		} else {
+			currentView = <UserAuthForm />;
+		}
+
 		return (
 			<div className="App">
-				<input className="username" />
-				<input className="password" />
-				<button className="log-inv">log in</button>
-				<GameState currentTurn={this.state.currentTurn}/>
-				<Board 
-					handleSquareClick={this.handleSquareClick.bind(this)} 
-					squareIds={this.squareIds} currentTurn={this.state.currentTurn} 
-					toggleCurrentTurn={this.toggleCurrentTurn.bind(this)}
-					selectedSquares={this.state.selectedSquares}
-				/>
+				{currentView}
 			</div>
 		);
 	}

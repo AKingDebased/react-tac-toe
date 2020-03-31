@@ -1,3 +1,5 @@
+// TODO: lint all this
+/* eslint-disable */
 import React from 'react';
 import Square from './Square';
 
