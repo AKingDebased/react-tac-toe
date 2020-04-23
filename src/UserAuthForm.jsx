@@ -29,6 +29,14 @@ class UserAuthForm extends Component {
         // firebase.auth().createUserWithEmailAndPassword(email, password)
         //     .then((data) => firestore.collection('users').doc(data.user.uid).set({ isActive: true }))
         //     .catch((error) => console.log('error creating user', error));
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then((data) => {
+                alert('user logged in successfully!');
+            })
+            .catch(function(error) {
+                alert('error logging in! see console');
+                console.log('error logging in', error);
+            });
     }
     
     handleRegistration() {
@@ -50,7 +58,11 @@ class UserAuthForm extends Component {
         firebase.auth().createUserWithEmailAndPassword(email, password)
             .then((data) => {
                 alert('user created successfully!');
-                firestore.collection('users').doc(data.user.uid).set({ isActive: true })
+                console.log('created user', data.user);
+                firestore.collection('users').doc(data.user.uid).set({
+                    email: data.user.email,
+                    isActive: true ,
+                })
             })
             .catch((error) => {
                 alert('error creating user! see console');

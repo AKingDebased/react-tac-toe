@@ -7,6 +7,7 @@ import React, { Fragment, Component } from 'react';
 import Board from './Board';
 import GameState from './GameState';
 import UserAuthForm from './UserAuthForm';
+import GameManager from './GameManager';
 
 // Database
 // TODO: Figure out the correct firebase modules for production
@@ -17,6 +18,10 @@ class App extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
+			userRef: null,
+			activeGameRef: null,
+			gameInProgress: false,
+			activeGamePlayerDisplayNames: [],
 			currentTurn: 'X',
 			selectedSquares: [],
 			isLoggedIn: false,
@@ -24,17 +29,29 @@ class App extends Component {
 		};
 
 		this.squareIds = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+		this.gamesRef = firestore.collection('games');
 
-		const gamesRef = firestore.collection('games');
-
-		let currentGameRef;
+		let activeGameRef;
 		let currentPlayersRef;
 
-		// Authentication
-		firebase.auth().onAuthStateChanged((user) => {
+		// Check if user is logged in already
+		firebase.auth().onAuthStateChanged(user => {
+			console.log('auth state changed', user)
+			// // console.log('does this user exist at this uid?', firestore.collection('users').doc(user.uid));
+			// userRef.get()
+			// 	.then(userSnapshot => {
+			// 		if (!userSnapshot.exists) {
+			// 			userRef.set({
+			// 				isActive: true
+			// 			});
+			// 		}
+			// 	});
+
+
 			if (user) {
 				this.setState({
 					isLoggedIn: true,
+					userRef: firestore.collection('users').doc(user.uid),
 				});
 			}
 
@@ -43,27 +60,7 @@ class App extends Component {
 			});
 		});
 
-		gamesRef.get()
-			.then((gamesSnapshot) => {
-				if (gamesSnapshot.size < 1) {
-					gamesRef.add({
-						inProgress: true
-					})
-						.then(ref => {
-							currentGameRef = ref;
-
-							currentPlayersRef = currentGameRef.collection('players');
-
-							currentPlayersRef.get()
-								.then(currentPlayersSnapshot => {
-									// if (currentPlayersSnapshot.size < 2) {
-									// }
-								});
-						});
-				}
-			});
-
-		// currentGameRef.get()
+		// activeGameRef.get()
 		// .then(docSnapshot => {
 		// 	if (docSnapshot.exists) {
 		// 		// Check if room is full. If not full, permit the user to enter
@@ -72,11 +69,11 @@ class App extends Component {
 		// 			inProgress: true
 		// 		})
 		// 		.then(docRef => {
-		// 			currentGameUsersRef = docRef.collection('users');
+		// 			activeGameUsersRef = docRef.collection('users');
 		
-		// 			currentGameUsersRef.add({})
+		// 			activeGameUsersRef.add({})
 		// 			.then(docRef => {
-		// 				currentGameUsersRef.get()
+		// 				activeGameUsersRef.get()
 		// 				.then(snapshot => {
 		// 					console.log('size', snapshot.size);
 		// 				});
@@ -84,6 +81,68 @@ class App extends Component {
 		// 		});
 		// 	}
 		// });
+	}
+
+	createNewGame () {
+		this.gamesRef.add({
+			inProgress: true,	
+		})
+		.then(ref => {
+			const activeGame = ref;
+
+			// TODO: Might want to keep a separate variable for the user id, and not rely on the 
+			// ID that's been saved to the user document
+			this.attachGameToPlayer(activeGame, this.state.userRef.id, activeGame.id)
+			.then(this.observeActiveGamePlayers.bind(this, activeGame, firestore.collection('users')))
+			.then(() => {
+				console.log('new game associated with current user');
+				alert('new game created! entering now.');
+
+				this.setState({
+					gameInProgress: true,
+					activeGameRef: activeGame
+				});
+			})
+		})
+		.catch(err => {
+			alert('error creating game. see console');
+			console.log('error', err);
+		});
+	}
+
+	attachGameToPlayer (activeGame, playerId, gameId) {
+		console.log('attaching game to player');
+		return activeGame.collection('players').doc(playerId).set({
+			isActive: true
+		})
+		.then(ref => {		
+			console.log('new game added', activeGame);
+
+			this.state.userRef.collection('games').doc(gameId).set({
+				isActive: true
+			})
+		});
+	}
+
+	observeActiveGamePlayers (activeGame, usersRef) {
+		// TODO: Is there a better way to find all users who are a) in a game with this id b) set to 'isActive'?
+
+		// TODO: Should implement local caching so we don't have to constantly hit the DB unnecessarily
+
+		// TODO: Need a way to ensure this observer is not called multiple times
+		return activeGame.collection('players').onSnapshot(playersSnapshot => {
+			const userPromises = [];
+
+			playersSnapshot.docs.forEach(playerData => userPromises.push(usersRef.doc(playerData.id).get()));
+
+			// this.setState({ activeGamePlayerDisplayNames: playerEmails});
+			Promise.all(userPromises)
+			.then(users => {
+				this.setState({
+					activeGamePlayerDisplayNames: users.map(user => user.data().email)
+				});
+			});
+		});
 	}
 
 	checkGameState(selectedSquares) {
@@ -137,12 +196,12 @@ class App extends Component {
 		});
 	}
 
-	toggleCurrentTurn() {
+	toggleCurrentTurn () {
 		this.setState((state) => ({ currentTurn: state.currentTurn === 'X' ? 'O' : 'X'}));
 	}
 
 	render() {
-		const { isLoggedIn, isLoading } = this.state;
+		const { isLoggedIn, isLoading, gameInProgress } = this.state;
 		let currentView;
 
 		if (isLoading) {
@@ -152,17 +211,27 @@ class App extends Component {
 				</Fragment>
 			);
 		} else if (isLoggedIn) {
-			currentView = (
-				<Fragment>
-					<GameState currentTurn={this.state.currentTurn}/>
-					<Board 
-						handleSquareClick={this.handleSquareClick.bind(this)} 
-						squareIds={this.squareIds} currentTurn={this.state.currentTurn} 
-						toggleCurrentTurn={this.toggleCurrentTurn.bind(this)}
-						selectedSquares={this.state.selectedSquares}
-					/>
-				</Fragment>
-			);
+			if (gameInProgress) {
+				currentView = (
+					<Fragment>
+						<GameState 
+							currentTurn={this.state.currentTurn} 
+							activeGamePlayerDisplayNames={this.state.activeGamePlayerDisplayNames}
+						/>
+						<Board 
+							handleSquareClick={this.handleSquareClick.bind(this)} 
+							squareIds={this.squareIds} currentTurn={this.state.currentTurn} 
+							toggleCurrentTurn={this.toggleCurrentTurn.bind(this)}
+							selectedSquares={this.state.selectedSquares}
+						/>
+					</Fragment>
+				);
+			} else {
+				currentView = <GameManager 
+					createNewGame={this.createNewGame.bind(this)}
+					activeGameRef={this.state.activeGameRef}
+				/>;
+			}
 		} else {
 			currentView = <UserAuthForm />;
 		}
