@@ -77,54 +77,66 @@ class UserAuthForm extends Component {
         if (!isRegistering) {
             currentView = (
                 <Fragment>
-                    <h2 className="user-auth__title">React Tac Toe</h2>
-                    <div className="user-auth__log-in">
-                        <input autoFocus name="email" className="email" value={this.state.email} onChange={this.handleFormChange.bind(this)}/>
-                        <input name="password" className="password" type="password" value={this.state.password} onChange={this.handleFormChange.bind(this)}/>
-                        <button 
-                            onClick={this.handleLogIn.bind(this)} 
-                            className="log-inv">
-                                log in!
-                        </button>
-                    </div>
-                    <div className="user-auth__register">
-                        <div className="separator">New to React Tac Toe?</div>
-                        <button
-                            onClick={ () => this.setState({ isRegistering: true }) }>
-                                Create Your React Tac Toe Account!
-                        </button>
+                    <div className="box has-text-centered">
+                        <h2 className="user-auth__title">React Tac Toe</h2>
+                        <div className="control user-auth__log-in">
+                            <div className="field">
+                                <input autoFocus name="email" placeholder="email" className="input email" value={this.state.email} onChange={this.handleFormChange.bind(this)}/>
+                            </div>
+
+                            <div className="field">
+                                <input name="password" placeholder="password" className="input password" type="password" value={this.state.password} onChange={this.handleFormChange.bind(this)}/>
+                            </div>
+
+                            <button 
+                                onClick={this.handleLogIn.bind(this)} 
+                                className="button log-inv">
+                                    log in!
+                            </button>
+                        </div>
+
+                        <div className="user-auth__register">
+                            <div className="separator">New to React Tac Toe?</div>
+                            <button
+                                className="button"
+                                onClick={ () => this.setState({ isRegistering: true }) }>
+                                    Create Your React Tac Toe Account!
+                            </button>
+                        </div>
                     </div>
                 </Fragment>
             );
         } else {
             currentView = (
                 <Fragment>
-                    <h2 className="user-auth__title">React Tac Toe</h2>
-                    <div className="user-auth__register">
-                        <div>email</div>
-                        <input autoFocus name="email" className="email" value={this.state.email} onChange={this.handleFormChange.bind(this)}/>
-                        
-                        <div>password</div>
-                        <input name="password" className="password" type="password" value={this.state.password} onChange={this.handleFormChange.bind(this)}/>
-                        
-                        <div>verify password</div>
-                        <input name="verifyPassword" className="password" type="password" value={this.state.verifyPassword} onChange={this.handleFormChange.bind(this)}/>
-                        
-                        <button 
-                            onClick={this.handleRegistration.bind(this)} 
-                            className="log-inv">
-                                sign up!
-                        </button>
+                    <div className="box has-text-centered">
+                        <h2 className="user-auth__title">React Tac Toe</h2>
+                        <div className="control user-auth__register">
+                            <div className="field">
+                            <label className="label">email</label>
+                                <input autoFocus placeholder="email" name="email" className="input email" value={this.state.email} onChange={this.handleFormChange.bind(this)}/>
+                            </div>
+
+                            <div className="field">
+                                <label className="label">password</label>
+                                <input name="password" className="input password" placeholder="password" type="password" value={this.state.password} onChange={this.handleFormChange.bind(this)}/>
+
+                                <label className="label">verify password</label>
+                                <input name="verifyPassword" className="input password" placeholder="verify password" type="password" value={this.state.verifyPassword} onChange={this.handleFormChange.bind(this)}/>
+                            </div>
+
+                            <button 
+                                onClick={this.handleRegistration.bind(this)} 
+                                className="button log-inv">
+                                    sign up!
+                            </button>
+                        </div>
                     </div>
                 </Fragment>
             )
         }
 
-        return (
-            <div className="user-auth">
-                {currentView}
-            </div>
-        );
+        return <Fragment>{currentView}</Fragment>;
     }
 }
 

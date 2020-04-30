@@ -1,6 +1,11 @@
 // TODO: lint all this
 /* eslint-disable */
 import React, { Fragment, Component } from 'react';
+import {
+	Switch,
+	Route,
+	withRouter
+  } from "react-router-dom";
 // import update from 'immutability-helper';
 
 // Components
@@ -12,6 +17,8 @@ import GameManager from './GameManager';
 // Database
 // TODO: Figure out the correct firebase modules for production
 import firebase from './firebase-config';
+import GameContainer from './GameContainer';
+import HomeContainer from './HomeContainer';
 const firestore = firebase.firestore();
 
 class App extends Component {
@@ -98,8 +105,11 @@ class App extends Component {
 				console.log('new game associated with current user');
 				alert('new game created! entering now.');
 
+				// TODO: history.push or Redirect component?
+				// https://tylermcginnis.com/react-router-programmatically-navigate/
+				this.props.history.push('/game/testid123');
+
 				this.setState({
-					gameInProgress: true,
 					activeGameRef: activeGame
 				});
 			})
@@ -138,6 +148,7 @@ class App extends Component {
 			// this.setState({ activeGamePlayerDisplayNames: playerEmails});
 			Promise.all(userPromises)
 			.then(users => {
+
 				this.setState({
 					activeGamePlayerDisplayNames: users.map(user => user.data().email)
 				});
@@ -201,47 +212,32 @@ class App extends Component {
 	}
 
 	render() {
-		const { isLoggedIn, isLoading, gameInProgress } = this.state;
-		let currentView;
-
-		if (isLoading) {
-			currentView = (
-				<Fragment>
-					<p>Loading!</p>
-				</Fragment>
-			);
-		} else if (isLoggedIn) {
-			if (gameInProgress) {
-				currentView = (
-					<Fragment>
-						<GameState 
+		return (
+			<div className="container">
+				<Switch>
+					<Route path="/game/:id">
+						<GameContainer 
 							currentTurn={this.state.currentTurn} 
 							activeGamePlayerDisplayNames={this.state.activeGamePlayerDisplayNames}
-						/>
-						<Board 
 							handleSquareClick={this.handleSquareClick.bind(this)} 
 							squareIds={this.squareIds} currentTurn={this.state.currentTurn} 
 							toggleCurrentTurn={this.toggleCurrentTurn.bind(this)}
 							selectedSquares={this.state.selectedSquares}
 						/>
-					</Fragment>
-				);
-			} else {
-				currentView = <GameManager 
-					createNewGame={this.createNewGame.bind(this)}
-					activeGameRef={this.state.activeGameRef}
-				/>;
-			}
-		} else {
-			currentView = <UserAuthForm />;
-		}
+					</Route>
 
-		return (
-			<div className="App">
-				{currentView}
+					<Route path="/">
+						<HomeContainer 
+							isLoading={this.state.isLoading}
+							isLoggedIn={this.state.isLoggedIn}
+							createNewGame={this.createNewGame.bind(this)}
+							activeGameRef={this.state.activeGameRef}
+						/>
+					</Route>
+				</Switch>
 			</div>
-		);
+		)
 	}
 }
 
-export default App;
+export default withRouter(App);

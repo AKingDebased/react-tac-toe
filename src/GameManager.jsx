@@ -10,16 +10,31 @@ class Square extends Component {
 	}
 
 	renderActiveGames () {
-		return <span>test</span>;
+		return (
+			// TODO: Figure out how to flow these vertically
+			<div className="columns">
+				<div className="column">
+					<div className="box">sample game 1</div>
+				</div>
+
+				<div className="column">
+					<div className="box">sample game 2</div>
+				</div>
+				
+				<div className="column">
+					<div className="box">sample game 3</div>
+				</div>
+			</div>
+		);
 	}
 
 	render () {
 		return (
-			<div className="game-manager">
+			<div className="box game-manager">
 				<div className="game-manager__games">{this.renderActiveGames()}</div>
 				<button 
 					onClick={this.props.createNewGame} 
-					className="game-manager__create-game"
+					className="button game-manager__create-game"
 				>
 					New Game
 				</button>
