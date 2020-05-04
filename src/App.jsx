@@ -4,90 +4,79 @@ import React, { Fragment, Component } from 'react';
 import {
 	Switch,
 	Route,
-	withRouter
+	withRouter,
+	useLocation,
   } from "react-router-dom";
-// import update from 'immutability-helper';
-
-// Components
-import Board from './Board';
-import GameState from './GameState';
-import UserAuthForm from './UserAuthForm';
-import GameManager from './GameManager';
 
 // Database
 // TODO: Figure out the correct firebase modules for production
 import firebase from './firebase-config';
+const firestore = firebase.firestore();
+
+// Components
 import GameContainer from './GameContainer';
 import HomeContainer from './HomeContainer';
-const firestore = firebase.firestore();
 
 class App extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			userRef: null,
+			activeGameId: null,
 			activeGameRef: null,
 			gameInProgress: false,
 			activeGamePlayerDisplayNames: [],
 			currentTurn: 'X',
 			selectedSquares: [],
-			isLoggedIn: false,
 			isLoading: true,
+			isInvited: false,
+			usersRef: firestore.collection('users')
 		};
 
 		this.squareIds = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 		this.gamesRef = firestore.collection('games');
 
-		let activeGameRef;
-		let currentPlayersRef;
-
 		// Check if user is logged in already
 		firebase.auth().onAuthStateChanged(user => {
-			console.log('auth state changed', user)
-			// // console.log('does this user exist at this uid?', firestore.collection('users').doc(user.uid));
-			// userRef.get()
-			// 	.then(userSnapshot => {
-			// 		if (!userSnapshot.exists) {
-			// 			userRef.set({
-			// 				isActive: true
-			// 			});
-			// 		}
-			// 	});
-
-
 			if (user) {
-				this.setState({
-					isLoggedIn: true,
-					userRef: firestore.collection('users').doc(user.uid),
-				});
+				console.log('user is authenticated')
+				this.setState({ userRef: firestore.collection('users').doc(user.uid) });
+
+				if (this.state.isInvited) {
+					this.attachGameToPlayer(this.state.activeGameId, user.uid).then(() => {
+						console.log('attached game to invited player, redirecting to game');
+						
+						this.props.history.push(`/game/${this.state.activeGameId}`);
+						this.setState({ 
+							isInvited: false
+						})
+					});
+				}
 			}
+
+			this.handleArrivalRouting();
 
 			this.setState({
 				isLoading: false,
 			});
 		});
+	}
 
-		// activeGameRef.get()
-		// .then(docSnapshot => {
-		// 	if (docSnapshot.exists) {
-		// 		// Check if room is full. If not full, permit the user to enter
-		// 	} else {
-		// 		gamesRef.add({
-		// 			inProgress: true
-		// 		})
-		// 		.then(docRef => {
-		// 			activeGameUsersRef = docRef.collection('users');
-		
-		// 			activeGameUsersRef.add({})
-		// 			.then(docRef => {
-		// 				activeGameUsersRef.get()
-		// 				.then(snapshot => {
-		// 					console.log('size', snapshot.size);
-		// 				});
-		// 			});
-		// 		});
-		// 	}
-		// });
+	handleArrivalRouting () {
+		const queryParams = new URLSearchParams(this.props.location.search),
+			activeGameId = this.props.location.pathname.split('/')[2],
+			isGameView = this.props.location.pathname.split('/')[1] === 'game';
+
+		if (isGameView && queryParams.get('invite') == 'true') {
+			console.log('user was invited, redirecting home')
+			this.setState({ 
+				isInvited: queryParams.get('invite') == 'true',
+				activeGameRef: firestore.collection('games').doc(activeGameId)
+			}, this.props.history.push('/'));
+		} else if (isGameView) {
+			console.log(`user wasn't invited, landed on game page, sending home`)
+			this.props.history.push('/');
+		}
 	}
 
 	createNewGame () {
@@ -99,19 +88,17 @@ class App extends Component {
 
 			// TODO: Might want to keep a separate variable for the user id, and not rely on the 
 			// ID that's been saved to the user document
-			this.attachGameToPlayer(activeGame, this.state.userRef.id, activeGame.id)
-			.then(this.observeActiveGamePlayers.bind(this, activeGame, firestore.collection('users')))
+			this.attachGameToPlayer(activeGame, this.state.userRef.id)
+			.then(this.observeActiveGamePlayers.bind(this, activeGame, this.state.usersRef))
 			.then(() => {
 				console.log('new game associated with current user');
 				alert('new game created! entering now.');
 
 				// TODO: history.push or Redirect component?
 				// https://tylermcginnis.com/react-router-programmatically-navigate/
-				this.props.history.push('/game/testid123');
-
 				this.setState({
 					activeGameRef: activeGame
-				});
+				}, () => this.props.history.push(`/game/${activeGame.id}`));
 			})
 		})
 		.catch(err => {
@@ -120,17 +107,16 @@ class App extends Component {
 		});
 	}
 
-	attachGameToPlayer (activeGame, playerId, gameId) {
-		console.log('attaching game to player');
+	attachGameToPlayer (activeGame, playerId) {		
 		return activeGame.collection('players').doc(playerId).set({
 			isActive: true
 		})
 		.then(ref => {		
-			console.log('new game added', activeGame);
+			console.log('player added to game');
 
-			this.state.userRef.collection('games').doc(gameId).set({
+			this.state.userRef.collection('games').doc(activeGame.id).set({
 				isActive: true
-			})
+			}).then(() => { console.log('game added to player ref') });
 		});
 	}
 
@@ -138,17 +124,18 @@ class App extends Component {
 		// TODO: Is there a better way to find all users who are a) in a game with this id b) set to 'isActive'?
 
 		// TODO: Should implement local caching so we don't have to constantly hit the DB unnecessarily
+		// Frequently hit documents, like users and games, should have observers set up that watch for changes, cache them
+		// locally, and pass them down to all the components using them
 
 		// TODO: Need a way to ensure this observer is not called multiple times
 		return activeGame.collection('players').onSnapshot(playersSnapshot => {
+			console.log('detecting change with active players');
 			const userPromises = [];
 
 			playersSnapshot.docs.forEach(playerData => userPromises.push(usersRef.doc(playerData.id).get()));
 
-			// this.setState({ activeGamePlayerDisplayNames: playerEmails});
 			Promise.all(userPromises)
 			.then(users => {
-
 				this.setState({
 					activeGamePlayerDisplayNames: users.map(user => user.data().email)
 				});
@@ -217,21 +204,28 @@ class App extends Component {
 				<Switch>
 					<Route path="/game/:id">
 						<GameContainer 
+							activeGameRef={this.state.activeGameRef}
 							currentTurn={this.state.currentTurn} 
 							activeGamePlayerDisplayNames={this.state.activeGamePlayerDisplayNames}
 							handleSquareClick={this.handleSquareClick.bind(this)} 
 							squareIds={this.squareIds} currentTurn={this.state.currentTurn} 
 							toggleCurrentTurn={this.toggleCurrentTurn.bind(this)}
 							selectedSquares={this.state.selectedSquares}
+							observeActiveGamePlayers={this.observeActiveGamePlayers.bind(this)}
+							usersRef={this.state.usersRef}
 						/>
 					</Route>
 
 					<Route path="/">
 						<HomeContainer 
 							isLoading={this.state.isLoading}
-							isLoggedIn={this.state.isLoggedIn}
+							userRef={this.state.userRef}
+							usersRef={this.state.usersRef}
 							createNewGame={this.createNewGame.bind(this)}
 							activeGameRef={this.state.activeGameRef}
+							isInvited={this.state.isInvited}
+							activeGameId={this.state.activeGameId}
+							gamesRef={this.gamesRef}
 						/>
 					</Route>
 				</Switch>

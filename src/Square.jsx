@@ -1,11 +1,11 @@
 // TODO: lint all this
 /* eslint-disable */
-import React from 'react';
+import React, { Component } from 'react';
 import Symbol from './Symbol';
 
 // TODO: Figure out this line break bullshit
 
-class Square extends React.Component {
+class Square extends Component {
 	constructor(props) {
 		super(props);
 	}

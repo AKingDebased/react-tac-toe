@@ -6,33 +6,64 @@ import UserAuthForm from './UserAuthForm';
 
 function HomeContainer (props) {
 	const { 
-		isLoggedIn, 
+		userRef, 
+		usersRef,
 		isLoading, 
 		createNewGame,
-		activeGameRef
+		activeGameRef,
+		isInvited,
+		gamesRef,
 	} = props;
 	let currentView;
 
 	if (isLoading) {
+		// TODO: Should make a component for this
+		currentView = (
+			<div className="column is-half is-offset-one-quarter">
+				<Fragment>
+					<div className="column is-full">
+						<progress className="progress is-large is-info" max="100">60%</progress>
+					</div>
+				</Fragment>
+			</div>
+		);
+	} else if (userRef && !isInvited) {
+		currentView = (
+			<div className="column is-half is-offset-one-quarter">
+				<GameManager 
+					userRef={userRef}
+					usersRef={usersRef}
+					createNewGame={createNewGame}
+					activeGameRef={activeGameRef}
+					gamesRef={gamesRef}
+				/>;
+			</div>
+		)
+	} else if (!userRef && isInvited) {
 		currentView = (
 			<Fragment>
-				<p>Loading!</p>
+				<div className="column is-half is-offset-one-quarter">
+					<div className="notification is-warning">
+						<button className="delete"></button>
+						Before joining this game, you must either sign in or register. You will be redirected after authenticating.
+					</div>
+				</div>
+				<div className="column is-half is-offset-one-quarter">
+					<UserAuthForm />
+				</div>
 			</Fragment>
 		);
-	} else if (isLoggedIn) {
-		currentView = <GameManager 
-			createNewGame={createNewGame}
-			activeGameRef={activeGameRef}
-		/>;
 	} else {
-		currentView = <UserAuthForm />;
+		currentView = (
+			<div className="column is-half is-offset-one-quarter">
+				<UserAuthForm />
+			</div>
+		);
 	}
 
 	return ( 
-		<div className="columns">
-			<div className="column is-half is-offset-one-quarter">
-				{currentView}
-			</div>
+		<div className="columns columns is-multiline">
+			{currentView}
 		</div> 
 	);
 }

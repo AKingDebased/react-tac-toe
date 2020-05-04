@@ -25,10 +25,7 @@ class UserAuthForm extends Component {
     
     handleLogIn() {
         const { email, password } = this.state;
-    
-        // firebase.auth().createUserWithEmailAndPassword(email, password)
-        //     .then((data) => firestore.collection('users').doc(data.user.uid).set({ isActive: true }))
-        //     .catch((error) => console.log('error creating user', error));
+
         firebase.auth().signInWithEmailAndPassword(email, password)
             .then((data) => {
                 alert('user logged in successfully!');
@@ -61,7 +58,7 @@ class UserAuthForm extends Component {
                 console.log('created user', data.user);
                 firestore.collection('users').doc(data.user.uid).set({
                     email: data.user.email,
-                    isActive: true ,
+                    isActive: true,
                 })
             })
             .catch((error) => {
@@ -113,7 +110,7 @@ class UserAuthForm extends Component {
                         <h2 className="user-auth__title">React Tac Toe</h2>
                         <div className="control user-auth__register">
                             <div className="field">
-                            <label className="label">email</label>
+                                <label className="label">email</label>
                                 <input autoFocus placeholder="email" name="email" className="input email" value={this.state.email} onChange={this.handleFormChange.bind(this)}/>
                             </div>
 
@@ -128,7 +125,7 @@ class UserAuthForm extends Component {
                             <button 
                                 onClick={this.handleRegistration.bind(this)} 
                                 className="button log-inv">
-                                    sign up!
+                                    Sign Up!
                             </button>
                         </div>
                     </div>

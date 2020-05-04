@@ -3,9 +3,16 @@
 @import '../node_modules/bulma/sass/elements/button.sass';
 @import '../node_modules/bulma/sass/elements/container.sass';
 @import '../node_modules/bulma/sass/form/_all';
+
+// Actively using
+@import '../node_modules/bulma/sass/elements/box.sass';
+@import '../node_modules/bulma/sass/grid/columns.sass';
+@import '../node_modules/bulma/sass/components/level.sass';
+@import '../node_modules/bulma/sass/components/modal.sass';
+@import '../node_modules/bulma/sass/elements/other.sass';
 @import '../node_modules/bulma/sass/elements/title.sass';
-@import '../node_modules/bulma/sass/elements/box.sass'; // Using
-@import '../node_modules/bulma/sass/grid/columns.sass'; // Using
+@import '../node_modules/bulma/sass/elements/notification.sass';
+@import '../node_modules/bulma/sass/elements/progress.sass';
 
 @import '_variables.scss';
 @import '_index.scss';

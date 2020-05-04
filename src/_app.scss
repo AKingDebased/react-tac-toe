@@ -47,8 +47,6 @@
 	display: flex;
 	flex-wrap: wrap;
 	margin: 0 auto;
-	position: relative;
-	top: 13vh;
 	border-radius: 10px;
     overflow: hidden;
 }
@@ -107,4 +105,8 @@
 	top: 30vh;
 	margin: 0 auto;
 	
+}
+
+.game-card {
+	cursor: pointer;
 }
