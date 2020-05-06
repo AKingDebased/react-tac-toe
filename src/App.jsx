@@ -5,7 +5,6 @@ import {
 	Switch,
 	Route,
 	withRouter,
-	useLocation,
   } from "react-router-dom";
 
 // Database
@@ -89,7 +88,6 @@ class App extends Component {
 			// TODO: Might want to keep a separate variable for the user id, and not rely on the 
 			// ID that's been saved to the user document
 			this.attachGameToPlayer(activeGame, this.state.userRef.id)
-			.then(this.observeActiveGamePlayers.bind(this, activeGame, this.state.usersRef))
 			.then(() => {
 				console.log('new game associated with current user');
 				alert('new game created! entering now.');
@@ -117,29 +115,6 @@ class App extends Component {
 			this.state.userRef.collection('games').doc(activeGame.id).set({
 				isActive: true
 			}).then(() => { console.log('game added to player ref') });
-		});
-	}
-
-	observeActiveGamePlayers (activeGame, usersRef) {
-		// TODO: Is there a better way to find all users who are a) in a game with this id b) set to 'isActive'?
-
-		// TODO: Should implement local caching so we don't have to constantly hit the DB unnecessarily
-		// Frequently hit documents, like users and games, should have observers set up that watch for changes, cache them
-		// locally, and pass them down to all the components using them
-
-		// TODO: Need a way to ensure this observer is not called multiple times
-		return activeGame.collection('players').onSnapshot(playersSnapshot => {
-			console.log('detecting change with active players');
-			const userPromises = [];
-
-			playersSnapshot.docs.forEach(playerData => userPromises.push(usersRef.doc(playerData.id).get()));
-
-			Promise.all(userPromises)
-			.then(users => {
-				this.setState({
-					activeGamePlayerDisplayNames: users.map(user => user.data().email)
-				});
-			});
 		});
 	}
 
@@ -211,8 +186,8 @@ class App extends Component {
 							squareIds={this.squareIds} currentTurn={this.state.currentTurn} 
 							toggleCurrentTurn={this.toggleCurrentTurn.bind(this)}
 							selectedSquares={this.state.selectedSquares}
-							observeActiveGamePlayers={this.observeActiveGamePlayers.bind(this)}
 							usersRef={this.state.usersRef}
+							userRef={this.state.userRef}
 						/>
 					</Route>
 

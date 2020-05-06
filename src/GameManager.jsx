@@ -4,6 +4,8 @@ import React, { Component } from 'react';
 import firebase from './firebase-config';
 const firestore = firebase.firestore();
 
+import GameCard from './GameCard';
+
 class GameManager extends Component {
 	constructor(props) {
 		super(props);
@@ -77,11 +79,7 @@ class GameManager extends Component {
 			const columns = games.map((game) => {
 				// TODO: Need a unique id for this list
 				// TODO: Need logic for when game doesn't have an opposing player
-				return (
-					<div className="column">
-						<div className="box game-card">Continue game with {game.opposingPlayerDisplay}</div>
-					</div>
-				);
+				return <GameCard gameInfo={game}/>
 			});
 
 			return (
